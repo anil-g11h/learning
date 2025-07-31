@@ -1,0 +1,20 @@
+{
+  "name": "simple-http-server-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "build": "tsc",
+    "start": "node dist/indexs.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0"
+  }
+}

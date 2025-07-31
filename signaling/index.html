@@ -1,0 +1,62 @@
+<html>
+  <body>
+    <style>
+      #outgoing {
+        width: 600px;
+        word-wrap: break-word;
+        white-space: normal;
+      }
+    </style>
+    <audio id="remoteAudio" autoplay></audio>
+    <script src="simplepeer.min.js"></script>
+    <script>
+      // Connect to signaling server
+      const ws = new WebSocket('ws://' + location.hostname + ':8001');
+      let peer;
+
+      // Get microphone
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
+        peer = new SimplePeer({
+          initiator: Math.random() < 0.5, // random initiator
+          trickle: false,
+          stream: stream
+        });
+
+        peer.on('signal', data => {
+          ws.send(JSON.stringify(data));
+        });
+
+ws.onmessage = async msg => {
+  let text;
+  if (msg.data instanceof Blob) {
+    text = await msg.data.text();
+  } else {
+    text = msg.data;
+  }
+  try {
+    const signal = JSON.parse(text);
+    if (signal && (signal.sdp || signal.candidate || signal.type)) {
+      peer.signal(signal);
+    }
+  } catch (e) {
+    console.error('Error parsing signal:', e);
+  }
+};
+
+        peer.on('connect', () => {
+          console.log('Connected!');
+        });
+
+        peer.on('stream', remoteStream => {
+          const audio = document.getElementById('remoteAudio');
+          audio.srcObject = remoteStream;
+        });
+
+        peer.on('error', err => console.error('Peer error:', err));
+      }).catch(err => {
+        alert('Microphone access denied: ' + err);
+      });
+    </script>
+    <script src="simplepeer.min.js"></script>
+  </body>
+</html>

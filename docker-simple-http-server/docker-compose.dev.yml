@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: development
+    container_name: my-ts-app-dev
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debugging port
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/dist
+    environment:
+      - NODE_ENV=development
+      - DEBUG=app:*
+    command: npm run dev
+    stdin_open: true
+    tty: true
