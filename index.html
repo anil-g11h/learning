@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>6-Month Developer Roadmap — Daily Planner</title>
+
+  <!-- Lightweight CSS (Tailwind-like utility mini styles for simplicity) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220; --card:#0f1724; --muted:#9ca3af; --accent:#7c3aed; --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; margin:0; background:linear-gradient(180deg,#071028 0%, #0b1220 100%); color:#e6eef8; -webkit-font-smoothing:antialiased;}
+    .container{max-width:1100px; margin:28px auto; padding:20px;}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;}
+    h1{font-size:20px; margin:0}
+    .row{display:flex; gap:12px; align-items:center}
+    .card{background:var(--card); padding:14px; border-radius:12px; box-shadow:0 6px 18px rgba(2,6,23,0.6); margin-bottom:12px;}
+    .muted{color:var(--muted); font-size:13px}
+    .month-title{font-weight:600; font-size:16px; display:flex; justify-content:space-between; align-items:center}
+    .topic{display:flex; justify-content:space-between; padding:8px 6px; border-radius:8px}
+    .topic + .topic{margin-top:6px}
+    .link{color:#8ab4ff; text-decoration:none}
+    .small{font-size:13px}
+    .btn{background:linear-gradient(90deg,var(--accent),#4f46e5); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer}
+    .btn-ghost{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); padding:8px 10px; border-radius:8px; cursor:pointer}
+    input,select{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04); background:transparent; color:inherit}
+    .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+    .progress-wrap{margin-top:8px}
+    .progress-bar{height:10px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden}
+    .progress-fill{height:10px; background:linear-gradient(90deg,var(--accent),#4f46e5)}
+    details summary{list-style:none; cursor:pointer; outline:none; display:flex; justify-content:space-between; align-items:center}
+    pre{white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:13px}
+    a.external{color:#8ab4ff}
+    footer{margin-top:18px; color:var(--muted); font-size:13px}
+    @media(max-width:880px){ .grid{grid-template-columns:1fr} header{flex-direction:column; align-items:flex-start} }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div>
+        <h1>6-Month Developer Roadmap — Planner & Tracker</h1>
+        <div class="muted">Free resources • Daily plan generator • LocalStorage sync</div>
+      </div>
+
+      <div class="row">
+        <button id="exportBtn" class="btn-ghost" title="Export progress JSON">Export</button>
+        <button id="importBtn" class="btn-ghost" title="Import progress JSON">Import</button>
+        <button id="resetBtn" class="btn-ghost" title="Reset progress">Reset</button>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <div class="grid">
+      <div class="card">
+        <div style="display:flex; gap:8px; align-items:center; justify-content:space-between">
+          <div>
+            <div class="small muted">Daily plan start date</div>
+            <input id="startDate" type="date" />
+          </div>
+          <div>
+            <div class="small muted">Study days per week</div>
+            <select id="daysPerWeek">
+              <option value="7">7 (everyday)</option>
+              <option value="6">6</option>
+              <option value="5" selected>5</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+          <div>
+            <div class="small muted">Target hours / day</div>
+            <select id="hoursPerDay">
+              <option>1</option><option>1.5</option><option>2</option><option selected>3</option><option>4</option>
+            </select>
+          </div>
+          <div>
+            <div class="small muted">Plan length (months)</div>
+            <select id="monthsCount"><option selected>6</option><option>3</option><option>4</option><option>9</option></select>
+          </div>
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button id="generateBtn" class="btn">Generate Daily Plan</button>
+          <button id="regenBtn" class="btn-ghost">Regenerate (randomize order)</button>
+        </div>
+        <div class="muted small" style="margin-top:8px">Tip: pick a start date and days/week — generator will distribute granular subtopics across the days sequentially so each day has a focused small task.</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="muted small">Overall progress</div>
+            <div id="overallText" style="font-weight:700; font-size:18px">0 / 0 completed</div>
+          </div>
+          <div style="width:50%">
+            <div class="progress-wrap">
+              <div class="progress-bar"><div id="overallProgress" class="progress-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button id="showRoadmap" class="btn-ghost">Toggle Full Roadmap</button>
+          <button id="showSchedule" class="btn-ghost">Toggle Daily Schedule</button>
+          <button id="clearSchedule" class="btn-ghost">Clear Schedule</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Roadmap / Schedule area -->
+    <div id="contentArea" style="margin-top:12px"></div>
+
+    <footer>
+      Built for offline-first learning. If you want cloud sync (Supabase/Firebase) added, I can add it next.
+    </footer>
+  </div>
+
+<script>
+/*
+  Data model: months -> topics -> subtopics (granular) with free resources and project idea
+  Free resources only (MDN, freeCodeCamp, The Odin Project, JS.info, MongoDB University, Postgres docs, System Design Primer, Docker docs, GitHub Actions docs, HuggingFace course (free parts), OpenAI docs (free docs), LangChain docs)
+*/
+
+const ROADMAP = [
+  {
+    id: 'm1',
+    title: 'Month 1 — JavaScript & TypeScript Foundations',
+    topics: [
+      {
+        id: 'm1t1',
+        title: 'JavaScript Core',
+        subtopics: [
+          { id: 'm1t1s1', text: 'Execution context, scope, hoisting', resources:[
+            {name:'MDN - JavaScript Guide',url:'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide'},
+            {name:'JavaScript.info - Execution context',url:'https://javascript.info/closure'}
+          ]},
+          { id: 'm1t1s2', text: 'Closures & lexical scope', resources:[
+            {name:'JavaScript.info - Closures',url:'https://javascript.info/closure'},
+            {name:'freeCodeCamp article - Closures',url:'https://www.freecodecamp.org/news/closures-in-javascript/'}
+          ]},
+          { id: 'm1t1s3', text: 'Event loop, microtasks vs macrotasks', resources:[
+            {name:'Philip Roberts - What the heck is the event loop?',url:'https://www.youtube.com/watch?v=8aGhZQkoFbQ'},
+            {name:'Jake Archibald blog - Tasks, microtasks, queues',url:'https://developers.google.com/web/fundamentals/primers/event-loop'}
+          ]},
+          { id: 'm1t1s4', text: 'Promises, async/await patterns', resources:[
+            {name:'MDN - Promises',url:'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises'},
+            {name:'JavaScript.info - async/await',url:'https://javascript.info/async-await'}
+          ]},
+          { id: 'm1t1s5', text: 'Prototypes & inheritance', resources:[
+            {name:'MDN - Prototype',url:'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain'},
+            {name:'You Don’t Know JS (book) - this & prototypes',url:'https://github.com/getify/You-Dont-Know-JS'}
+          ]}
+        ],
+        project: 'Small utilities library: debounce, throttle, deepClone, event emitter'
+      },
+      {
+        id: 'm1t2',
+        title: 'Modern JS & TypeScript intro',
+        subtopics: [
+          { id: 'm1t2s1', text: 'ES6+ syntax (destructuring, spread, modules)', resources:[
+            {name:'MDN - ES6 Features',url:'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment'},
+            {name:'Babel & modules guide',url:'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules'}
+          ]},
+          { id: 'm1t2s2', text: 'TypeScript basics: types, interfaces', resources:[
+            {name:'TypeScript Handbook',url:'https://www.typescriptlang.org/docs/handbook/intro.html'},
+            {name:'freeCodeCamp TypeScript Guide',url:'https://www.freecodecamp.org/news/the-typescript-handbook/'}
+          ]},
+          { id: 'm1t2s3', text: 'Type narrowing, utility types', resources:[
+            {name:'TypeScript - Advanced Types',url:'https://www.typescriptlang.org/docs/handbook/2/advanced-types.html'},
+            {name:'TypeScript Deep Dive (free book)',url:'https://basarat.gitbook.io/typescript/'}
+          ]}
+        ],
+        project: 'Convert small JS project to TypeScript (Notes app)'
+      }
+    ]
+  },
+
+  {
+    id: 'm2',
+    title: 'Month 2 — Frontend (React + UX)',
+    topics: [
+      {
+        id: 'm2t1',
+        title: 'React fundamentals',
+        subtopics: [
+          { id:'m2t1s1', text:'React components & JSX', resources:[
+            {name:'React official tutorial',url:'https://react.dev/learn'},
+            {name:'freeCodeCamp - React intro',url:'https://www.freecodecamp.org/news/learn-react-by-building-a-simple-app/'}
+          ]},
+          { id:'m2t1s2', text:'Hooks: useState, useEffect', resources:[
+            {name:'React Hooks Docs',url:'https://react.dev/reference/react/useState'},
+            {name:'Kent C. Dodds - Hooks patterns (articles)',url:'https://kentcdodds.com/blog/size-of-react-memo'}
+          ]},
+          { id:'m2t1s3', text:'Routing with React Router', resources:[
+            {name:'React Router Docs',url:'https://reactrouter.com/en/main'},
+            {name:'freeCodeCamp - React Router',url:'https://www.freecodecamp.org/news/react-router-in-5-minutes/'}
+          ]},
+          { id:'m2t1s4', text:'State management: Context + minimal libs', resources:[
+            {name:'React Context docs',url:'https://react.dev/learn/passing-data-deeply-with-context'},
+            {name:'Zustand (lightweight) docs',url:'https://github.com/pmndrs/zustand'}
+          ]}
+        ],
+        project: 'Build a Kanban board (drag & drop saved to browser storage)'
+      },
+      {
+        id:'m2t2',
+        title:'UI & Performance',
+        subtopics:[
+          { id:'m2t2s1', text:'Component patterns & composition', resources:[
+            {name:'Advanced React Patterns (articles)',url:'https://reactpatterns.com/'},
+            {name:'Composition over inheritance (React)',url:'https://reactjs.org/docs/composition-vs-inheritance.html'}
+          ]},
+          { id:'m2t2s2', text:'Performance: memo, lazy, suspense', resources:[
+            {name:'React performance docs',url:'https://react.dev/learn/optimizing-performance'},
+            {name:'freeCodeCamp - Code splitting',url:'https://www.freecodecamp.org/news/react-code-splitting-with-lazy-and-suspense/'}
+          ]},
+          { id:'m2t2s3', text:'Tailwind CSS for rapid UI', resources:[
+            {name:'Tailwind Docs',url:'https://tailwindcss.com/docs'},
+            {name:'Tailwind from scratch (YouTube)',url:'https://www.youtube.com/watch?v=UBOj6rqRUME'}
+          ]}
+        ],
+        project: 'Personal portfolio (responsive + accessible)'
+      }
+    ]
+  },
+
+  {
+    id:'m3',
+    title:'Month 3 — Backend (Node.js, APIs, Realtime)',
+    topics:[
+      {
+        id:'m3t1',
+        title:'Node.js & Express',
+        subtopics:[
+          { id:'m3t1s1', text:'Node runtime, modules, npm', resources:[
+            {name:'Node.js Docs',url:'https://nodejs.org/en/docs/'},
+            {name:'Nodeschool exercises',url:'https://nodeschool.io/'}
+          ]},
+          { id:'m3t1s2', text:'Express routing & middleware', resources:[
+            {name:'Express Guide',url:'https://expressjs.com/en/guide/routing.html'},
+            {name:'freeCodeCamp - Express tutorial',url:'https://www.freecodecamp.org/news/express-js-handbook/'}
+          ]},
+          { id:'m3t1s3', text:'Error handling & logging', resources:[
+            {name:'Winston logger guide',url:'https://github.com/winstonjs/winston'},
+            {name:'Express error handling',url:'https://expressjs.com/en/guide/error-handling.html'}
+          ]}
+        ],
+        project:'REST API: Notes with auth'
+      },
+      {
+        id:'m3t2',
+        title:'Realtime & APIs',
+        subtopics:[
+          { id:'m3t2s1', text:'WebSockets & Socket.io basics', resources:[
+            {name:'Socket.io Docs',url:'https://socket.io/docs/v4/'},
+            {name:'freeCodeCamp - sockets',url:'https://www.freecodecamp.org/news/socket-io-guide/'}
+          ]},
+          { id:'m3t2s2', text:'REST design, status codes, pagination', resources:[
+            {name:'RESTful API design (Microsoft)',url:'https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design'},
+            {name:'REST API Tutorial',url:'https://restfulapi.net/'}
+          ]},
+          { id:'m3t2s3', text:'GraphQL basics (Apollo)', resources:[
+            {name:'Apollo Docs',url:'https://www.apollographql.com/docs/'},
+            {name:'How to GraphQL (free)',url:'https://www.howtographql.com/'}
+          ]}
+        ],
+        project:'Realtime chat app (Socket.io + persist messages)'
+      }
+    ]
+  },
+
+  {
+    id:'m4',
+    title:'Month 4 — Databases & Storage',
+    topics:[
+      {
+        id:'m4t1',
+        title:'Relational DB (PostgreSQL)',
+        subtopics:[
+          { id:'m4t1s1', text:'SQL basics, SELECT, JOINs', resources:[
+            {name:'SQLBolt',url:'https://sqlbolt.com/'},
+            {name:'PostgreSQL Tutorial',url:'https://www.postgresqltutorial.com/'}
+          ]},
+          { id:'m4t1s2', text:'Indexes, transactions, migrations', resources:[
+            {name:'Postgres docs - concurrency',url:'https://www.postgresql.org/docs/current/transaction-iso.html'},
+            {name:'Flyway/pg-migrate guides (free)',url:'https://flywaydb.org/'}
+          ]}
+        ],
+        project:'Expense tracker with Postgres'
+      },
+      {
+        id:'m4t2',
+        title:'NoSQL (MongoDB) & File Storage',
+        subtopics:[
+          { id:'m4t2s1', text:'MongoDB CRUD & aggregation', resources:[
+            {name:'MongoDB University (free)',url:'https://university.mongodb.com/'},
+            {name:'Mongoose docs',url:'https://mongoosejs.com/'}
+          ]},
+          { id:'m4t2s2', text:'File uploads → S3/Cloudinary basics', resources:[
+            {name:'AWS S3 Docs',url:'https://docs.aws.amazon.com/s3/'},
+            {name:'Cloudinary docs',url:'https://cloudinary.com/documentation'}
+          ]}
+        ],
+        project:'Image gallery (upload + CDN)'
+      }
+    ]
+  },
+
+  {
+    id:'m5',
+    title:'Month 5 — DevOps, CI/CD & Observability',
+    topics:[
+      {
+        id:'m5t1',
+        title:'Containers & Docker',
+        subtopics:[
+          { id:'m5t1s1', text:'Dockerfile & images', resources:[
+            {name:'Docker Docs',url:'https://docs.docker.com/get-started/'},
+            {name:'Play with Docker (free labs)',url:'https://labs.play-with-docker.com/'}
+          ]},
+          { id:'m5t1s2', text:'Compose, local dev containers', resources:[
+            {name:'Docker Compose docs',url:'https://docs.docker.com/compose/'}
+          ]}
+        ],
+        project:'Dockerize your Notes API + React frontend'
+      },
+      {
+        id:'m5t2',
+        title:'CI/CD & Monitoring',
+        subtopics:[
+          { id:'m5t2s1', text:'GitHub Actions basics', resources:[
+            {name:'GitHub Actions Docs',url:'https://docs.github.com/en/actions'}
+          ]},
+          { id:'m5t2s2', text:'Monitoring basics (Prometheus/Grafana)', resources:[
+            {name:'Prometheus docs',url:'https://prometheus.io/docs/introduction/overview/'},
+            {name:'Grafana docs',url:'https://grafana.com/docs/'}
+          ]}
+        ],
+        project:'Add CI pipeline + basic monitoring to deployed app'
+      }
+    ]
+  },
+
+  {
+    id:'m6',
+    title:'Month 6 — Architecture, Design & AI Integration',
+    topics:[
+      {
+        id:'m6t1',
+        title:'System Design & Patterns',
+        subtopics:[
+          { id:'m6t1s1', text:'System design foundations (scalability concepts)', resources:[
+            {name:'System Design Primer (free)',url:'https://github.com/donnemartin/system-design-primer'},
+            {name:'Designing Data-Intensive Apps (book summary)',url:'https://dataintensive.net/'}
+          ]},
+          { id:'m6t1s2', text:'Design patterns (Factory, Singleton, Observer)', resources:[
+            {name:'Refactoring.Guru',url:'https://refactoring.guru/design-patterns'}
+          ]}
+        ],
+        project:'Design & document architecture for a SaaS app (ADRs included)'
+      },
+      {
+        id:'m6t2',
+        title:'AI Integration (practical)',
+        subtopics:[
+          { id:'m6t2s1', text:'Embeddings & semantic search basics', resources:[
+            {name:'OpenAI embeddings docs',url:'https://platform.openai.com/docs/guides/embeddings'},
+            {name:'Pinecone docs (free tier)',url:'https://docs.pinecone.io/'}
+          ]},
+          { id:'m6t2s2', text:'LangChain basics & vector DBs', resources:[
+            {name:'LangChain docs',url:'https://python.langchain.com/en/latest/'},
+            {name:'Hugging Face course (free)',url:'https://huggingface.co/course/chapter1'}
+          ]}
+        ],
+        project:'Add search/summarization to your Notes app using embeddings'
+      }
+    ]
+  }
+];
+
+// Utilities & storage keys
+const STORAGE_KEY = 'devRoadmap_v1';
+const SCHEDULE_KEY = 'devRoadmapSchedule_v1';
+
+// App state (simple, no framework needed outside minimal DOM)
+let state = {
+  progress: {},     // {subtopicId: true}
+  schedule: [],     // [{date:'YYYY-MM-DD', items:[{id, text, resources, done}]}, ...]
+  showRoadmap: true,
+  showSchedule: true
+};
+
+// --- Helpers ---
+function $(sel){ return document.querySelector(sel); }
+function formatDate(d){ // YYYY-MM-DD
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) state.progress = JSON.parse(raw);
+    const rawSchedule = localStorage.getItem(SCHEDULE_KEY);
+    if(rawSchedule) state.schedule = JSON.parse(rawSchedule);
+  }catch(e){ console.error(e); }
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
+    localStorage.setItem(SCHEDULE_KEY, JSON.stringify(state.schedule));
+  }catch(e){ console.error(e); }
+}
+
+// Build list of all granular subtopics flattened with references
+function getAllSubtopics(){
+  const list = [];
+  ROADMAP.forEach(month=>{
+    month.topics.forEach(topic=>{
+      topic.subtopics.forEach(sub=>{
+        list.push({
+          id: sub.id,
+          monthId: month.id,
+          monthTitle: month.title,
+          topicId: topic.id,
+          topicTitle: topic.title,
+          text: sub.text,
+          resources: sub.resources || [],
+          project: topic.project || month.project || ''
+        });
+      });
+    });
+  });
+  return list;
+}
+
+// --- Rendering functions ---
+function render(){
+  const area = $('#contentArea');
+  area.innerHTML = '';
+  if(state.showRoadmap) area.appendChild(renderRoadmap());
+  if(state.showSchedule) area.appendChild(renderSchedule());
+  renderOverall();
+}
+
+function renderRoadmap(){
+  const wrapper = document.createElement('div');
+  wrapper.className = 'card';
+  const title = document.createElement('div');
+  title.innerHTML = `<div class="month-title" style="margin-bottom:6px"><div style="font-weight:700">Full Roadmap</div><div class="muted small">Check subtopics as you finish them</div></div>`;
+  wrapper.appendChild(title);
+
+  ROADMAP.forEach((month, mi)=>{
+    const monthEl = document.createElement('details');
+    monthEl.open = false;
+    monthEl.className = 'card';
+    monthEl.style.marginBottom = '10px';
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:700">${month.title}</div>
+      <div class="muted small">${month.topics.length} topics</div>
+    </div>`;
+    monthEl.appendChild(summary);
+
+    const inner = document.createElement('div');
+    inner.style.marginTop = '10px';
+    month.topics.forEach((topic, ti)=>{
+      const topicWrap = document.createElement('div');
+      topicWrap.style.marginBottom = '8px';
+      topicWrap.innerHTML = `<div class="muted small" style="font-weight:600">${topic.title}</div>`;
+      topic.subtopics.forEach(sub=>{
+        const row = document.createElement('div');
+        row.className = 'topic';
+        const left = document.createElement('div');
+        left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+        const chk = document.createElement('input');
+        chk.type='checkbox';
+        chk.checked = !!state.progress[sub.id];
+        chk.onchange = () => {
+          state.progress[sub.id] = chk.checked;
+          saveState(); renderOverall();
+        };
+        const label = document.createElement('div');
+        label.innerHTML = `<div style="font-weight:500">${sub.text}</div><div class="muted small">${topic.title}</div>`;
+        left.appendChild(chk); left.appendChild(label);
+
+        const right = document.createElement('div');
+        right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
+        const links = document.createElement('div');
+        links.className='small muted';
+        sub.resources.forEach((r, idx)=>{
+          const a = document.createElement('a'); a.href=r.url; a.target='_blank'; a.className='external'; a.textContent = r.name;
+          if(idx>0) links.appendChild(document.createTextNode(' • '));
+          links.appendChild(a);
+        });
+        right.appendChild(links);
+        row.appendChild(left); row.appendChild(right);
+        topicWrap.appendChild(row);
+      });
+      inner.appendChild(topicWrap);
+    });
+
+    monthEl.appendChild(inner);
+    wrapper.appendChild(monthEl);
+  });
+
+  return wrapper;
+}
+
+function renderSchedule(){
+  const wrapper = document.createElement('div');
+  wrapper.className='card';
+  wrapper.style.marginTop='12px';
+  const header = document.createElement('div');
+  header.style.display='flex'; header.style.justifyContent='space-between'; header.style.alignItems='center';
+  header.innerHTML = `<div style="font-weight:700">Daily Schedule</div><div class="muted small">Mark daily items done</div>`;
+  wrapper.appendChild(header);
+
+  if(state.schedule.length===0){
+    const empty = document.createElement('div');
+    empty.className='muted small';
+    empty.style.marginTop='12px';
+    empty.textContent = 'No schedule generated yet. Click "Generate Daily Plan".';
+    wrapper.appendChild(empty);
+    return wrapper;
+  }
+
+  // show first N days (with expand)
+  state.schedule.forEach(day=>{
+    const dayEl = document.createElement('details');
+    dayEl.style.marginTop='10px';
+    dayEl.open = false;
+    const sum = document.createElement('summary');
+    sum.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:600">${day.date}</div>
+      <div class="muted small">${day.items.length} item(s)</div>
+    </div>`;
+    dayEl.appendChild(sum);
+
+    const inner = document.createElement('div');
+    inner.style.marginTop='8px';
+    day.items.forEach(item=>{
+      const row = document.createElement('div');
+      row.className='topic';
+      const left = document.createElement('div');
+      left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+      const chk = document.createElement('input'); chk.type='checkbox'; chk.checked = !!item.done;
+      chk.onchange = () => { item.done = chk.checked; saveState(); renderOverall(); };
+      left.appendChild(chk);
+      const text = document.createElement('div'); text.innerHTML = `<div style="font-weight:500">${item.text}</div><div class="muted small">${item.topicTitle} • ${item.monthTitle}</div>`;
+      left.appendChild(text);
+
+      const right = document.createElement('div');
+      right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
+      if(item.resources && item.resources.length){
+        const a = document.createElement('a'); a.href = item.resources[0].url; a.target='_blank'; a.className='external small'; a.textContent = item.resources[0].name;
+        right.appendChild(a);
+      }
+      row.appendChild(left); row.appendChild(right);
+      inner.appendChild(row);
+    });
+
+    dayEl.appendChild(inner);
+    wrapper.appendChild(dayEl);
+  });
+
+  return wrapper;
+}
+
+function renderOverall(){
+  const all = getAllSubtopics();
+  const total = all.length;
+  const done = all.filter(s => !!state.progress[s.id]).length;
+  const pct = total===0?0:Math.round((done/total)*100);
+  $('#overallText').textContent = `${done} / ${total} completed`;
+  $('#overallProgress').style.width = pct + '%';
+}
+
+// --- Plan generator logic ---
+// Basic algorithm: flatten subtopics, optionally randomize, then allocate across calendar days that are study days
+function generatePlan({startDateStr, daysPerWeek=5, monthsCount=6}) {
+  const flat = getAllSubtopics().map(s => ({
+    id:s.id, text:s.text, resources:s.resources, topicTitle:s.topicTitle, monthTitle:s.monthTitle
+  }));
+  // Shuffle? we will not by default, but regen can shuffle
+  const totalDays = Math.ceil((monthsCount * 30) * (daysPerWeek/7)); // approximate days to schedule
+  // Build calendar days starting from startDate
+  const start = startDateStr ? new Date(startDateStr) : new Date();
+  const schedule = [];
+  // we will schedule on next N study-days (respect daysPerWeek)
+  // compute weekly study pattern: e.g., if daysPerWeek=5 -> study Mon-Fri (approx). Simpler: every day except every (7/daysPerWeek)th skip -> implement daily skip ratio
+  const skipInterval = Math.round(7 / daysPerWeek);
+  let d = new Date(start);
+  let idx=0; // index into flat
+  // Flatten ensures smaller tasks (we'll pack 1-2 subtopics per day depending)
+  // Aim: distribute items so roughly (flat.length / totalCalendarSlots) per slot ~1
+  const itemsPerSlot = 1; // keep 1-2 tasks per day for focus
+  // We'll iterate days until all items assigned
+  let dayCounter = 0;
+  while(idx < flat.length && dayCounter < 1000){ // safety cap
+    const dayStr = formatDate(d);
+    // decide if this day is a study day by using day-of-week and daysPerWeek
+    const dow = d.getDay(); // 0 Sun - 6 Sat
+    // Simple policy: pick study days as Mon-Fri when daysPerWeek>=5; otherwise pick pattern
+    let isStudyDay = true;
+    if(daysPerWeek === 7) isStudyDay = true;
+    else if(daysPerWeek === 6) isStudyDay = (dow !== 0); // not Sunday
+    else if(daysPerWeek === 5) isStudyDay = (dow >=1 && dow <=5); // Mon-Fri
+    else if(daysPerWeek === 4) isStudyDay = (dow >=1 && dow <=4); // Mon-Thu
+    else if(daysPerWeek === 3) isStudyDay = (dow >=1 && dow <=3); // Mon-Wed
+    else isStudyDay = true;
+
+    if(isStudyDay){
+      const items = [];
+      for(let k=0;k<itemsPerSlot && idx < flat.length;k++){
+        const s = flat[idx++];
+        items.push({...s, done: !!state.progress[s.id]});
+      }
+      schedule.push({date: dayStr, items});
+    }
+    d = addDays(d,1);
+    dayCounter++;
+  }
+
+  return schedule;
+}
+
+// --- DOM wiring ---
+document.addEventListener('DOMContentLoaded', () => {
+  // load saved state
+  loadState();
+
+  // defaults: set start date = today
+  $('#startDate').value = formatDate(new Date());
+
+  // buttons
+  $('#generateBtn').onclick = () => {
+    const startDate = $('#startDate').value || formatDate(new Date());
+    const daysPerWeek = parseInt($('#daysPerWeek').value,10);
+    const monthsCount = parseInt($('#monthsCount').value,10);
+    const schedule = generatePlan({startDateStr:startDate, daysPerWeek, monthsCount});
+    state.schedule = schedule;
+    saveState();
+    render();
+    window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+  };
+
+  $('#regenBtn').onclick = () => {
+    // Shuffle subtopics then generate
+    const all = getAllSubtopics();
+    // Fisher-Yates shuffle
+    for(let i=all.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [all[i],all[j]] = [all[j],all[i]];
+    }
+    // build schedule using shuffled order (override getAllSubtopics temporarily by writing state.schedule directly)
+    const startDate = $('#startDate').value || formatDate(new Date());
+    const daysPerWeek = parseInt($('#daysPerWeek').value,10);
+    const monthsCount = parseInt($('#monthsCount').value,10);
+    // create schedule from the shuffled flat list
+    const flat = all.map(s=>({id:s.id,text:s.text,resources:s.resources,topicTitle:s.topicTitle,monthTitle:s.monthTitle}));
+    const start = new Date(startDate);
+    let d = new Date(start);
+    const schedule = [];
+    let idx=0, dayCounter=0;
+    while(idx < flat.length && dayCounter < 1000){
+      const dow = d.getDay();
+      let isStudyDay = (daysPerWeek >=7) ? true : (daysPerWeek===6 ? dow!==0 : daysPerWeek===5 ? (dow>=1 && dow<=5) : daysPerWeek===4 ? (dow>=1 && dow<=4) : (dow>=1 && dow<=3));
+      if(isStudyDay){
+        schedule.push({date: formatDate(d), items:[{...flat[idx++], done: !!state.progress[flat[idx-1]?.id]}]});
+      }
+      d = addDays(d,1);
+      dayCounter++;
+    }
+    state.schedule = schedule;
+    saveState();
+    render();
+  };
+
+  $('#showRoadmap').onclick = (e) => { state.showRoadmap = !state.showRoadmap; render(); };
+  $('#showSchedule').onclick = (e) => { state.showSchedule = !state.showSchedule; render(); };
+  $('#clearSchedule').onclick = () => { if(confirm('Clear generated schedule?')){ state.schedule = []; saveState(); render(); } };
+  $('#resetBtn').onclick = () => { if(confirm('Reset ALL progress and schedule?')){ state.progress = {}; state.schedule = []; saveState(); render(); } };
+  $('#exportBtn').onclick = () => {
+    const payload = {progress: state.progress, schedule: state.schedule};
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+    const a = document.createElement('a'); a.href=dataStr; a.download = 'dev-roadmap-export.json'; a.click();
+  };
+  $('#importBtn').onclick = async () => {
+    const input = document.createElement('input'); input.type='file'; input.accept='.json';
+    input.onchange = (ev)=>{
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        try{
+          const json = JSON.parse(e.target.result);
+          if(json.progress) state.progress = json.progress;
+          if(json.schedule) state.schedule = json.schedule;
+          saveState(); render();
+          alert('Imported successfully.');
+        }catch(err){ alert('Invalid JSON'); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  // initial render
+  render();
+});
+
+// expose $ for tiny use
+function $(sel){ return document.querySelector(sel); }
+
+</script>
+</body>
+</html>
