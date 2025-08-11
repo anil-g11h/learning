@@ -1,0 +1,4 @@
+CSP Content security policy 
+browser security features which can be enabled through response header 
+content-security-policy: script-src 'self' 'https://cdn.com' script-src 'nonce-06269f1c-d79c-4b8b-9961-c26c5bcedbaf' 
+if need for inline script can use nounce and can include them above
