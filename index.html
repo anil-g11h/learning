@@ -562,8 +562,11 @@ function renderSchedule(){
       const right = document.createElement('div');
       right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
       if(item.resources && item.resources.length){
-        const a = document.createElement('a'); a.href = item.resources[0].url; a.target='_blank'; a.className='external small'; a.textContent = item.resources[0].name;
-        right.appendChild(a);
+        item.resources.map(resource=>{
+            const {url, name} = resource
+            const a = document.createElement('a'); a.href = url; a.target='_blank'; a.className='external small'; a.textContent = name;
+            right.appendChild(a);
+          })
       }
       row.appendChild(left); row.appendChild(right);
       inner.appendChild(row);
